@@ -1,17 +1,57 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { mockChallenges, mockProjects, ch421Timeline } from '../data/mockData';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { MapPin, Users, Calendar, Building, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { MapPin, Users, Calendar, Building, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
+import { Challenge, Project, TimelineEvent } from '../types';
 
 export const ProblemDetail = () => {
   const { id } = useParams();
-  
-  // Use mock data directly for demo purposes
-  const challenge = mockChallenges.find(c => c.id === id) || mockChallenges[0];
-  const project = mockProjects.find(p => p.challengeId === challenge.id);
-  const timeline = ch421Timeline;
+  const [data, setData] = useState<{ challenge: Challenge | null, project: Project | null, timeline: TimelineEvent[] }>({
+    challenge: null,
+    project: null,
+    timeline: []
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/v1/public/challenges/${id}`)
+      .then(res => res.json())
+      .then(response => {
+        if (response.success) {
+          setData({
+            challenge: response.data,
+            project: response.data.project,
+            timeline: response.data.timeline
+          });
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 flex justify-center items-center">
+        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!data.challenge) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 text-center">
+        <h2 className="text-xl font-bold text-gray-900 mb-2">Record Not Found</h2>
+        <p className="text-gray-500 mb-6">The requested public problem record could not be found or is not eligible for public viewing.</p>
+        <Link to="/explore" className="inline-flex text-sm text-blue-600 font-medium hover:underline">Return to Explorer</Link>
+      </div>
+    );
+  }
+
+  const { challenge, project, timeline } = data;
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
@@ -71,6 +111,7 @@ export const ProblemDetail = () => {
                     </div>
                   </div>
                 ))}
+                {timeline.length === 0 && <div className="text-gray-500 text-sm">No timeline events recorded yet.</div>}
               </div>
             </CardContent>
           </Card>

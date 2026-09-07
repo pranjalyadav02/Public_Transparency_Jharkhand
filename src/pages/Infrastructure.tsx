@@ -1,14 +1,40 @@
-import React, { useState } from 'react';
-import { mockInfrastructure } from '../data/mockData';
+import React, { useState, useEffect } from 'react';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { Search, MapPin, Building, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Search, MapPin, Building, AlertTriangle, ShieldCheck, Loader2 } from 'lucide-react';
+import { Infrastructure as InfraType } from '../types';
 
 export const Infrastructure = () => {
   const [searchTerm, setSearchTerm] = useState('RD-JH-45821');
-  
-  // Demo filter
-  const infra = mockInfrastructure.find(i => i.assetId.includes(searchTerm) || i.title.includes(searchTerm)) || mockInfrastructure[0];
+  const [infra, setInfra] = useState<InfraType | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
+
+  useEffect(() => {
+    handleSearch();
+  }, []);
+
+  const handleSearch = () => {
+    if (!searchTerm.trim()) return;
+    
+    setLoading(true);
+    fetch(`/api/v1/public/infrastructure?q=${encodeURIComponent(searchTerm)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data && data.data.length > 0) {
+          setInfra(data.data[0]);
+        } else {
+          setInfra(null);
+        }
+        setSearched(true);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+        setSearched(true);
+      });
+  };
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
@@ -26,14 +52,26 @@ export const Infrastructure = () => {
             className="w-full pl-10 pr-4 py-2.5 rounded-lg border-none focus:ring-0 text-gray-900"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           />
         </div>
-        <button className="bg-gray-900 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-gray-800 transition-colors">
+        <button 
+          onClick={handleSearch}
+          className="bg-gray-900 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-gray-800 transition-colors"
+        >
           Search
         </button>
       </div>
 
-      {infra && (
+      {loading ? (
+        <div className="flex justify-center items-center py-20">
+          <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+        </div>
+      ) : !infra && searched ? (
+        <div className="text-center py-20 text-gray-500 bg-white rounded-xl border border-gray-200">
+          No public infrastructure record found matching your criteria.
+        </div>
+      ) : infra && (
         <div className="space-y-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>

@@ -1,9 +1,26 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowRight, Activity, Users, Lightbulb, ShieldCheck, Target, Map } from 'lucide-react';
-import { stateStats } from '../data/mockData';
 import { Link } from 'react-router-dom';
 
 export const Home = () => {
+  const [overview, setOverview] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/v1/public/overview')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setOverview(data.data);
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
+
   return (
     <div className="w-full">
       {/* Hero Section */}
@@ -39,14 +56,18 @@ export const Home = () => {
           <span className="text-xs text-gray-400 flex items-center"><span className="w-2 h-2 rounded-full bg-emerald-500 mr-2"></span>Live Data</span>
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <StatCard label="Challenges Reported" value={stateStats.reported.toLocaleString()} icon={<Activity className="text-amber-500" />} />
-          <StatCard label="Verified" value={stateStats.verified.toLocaleString()} icon={<ShieldCheck className="text-blue-500" />} badge="Verified" />
-          <StatCard label="Innovation Projects" value={stateStats.projects.toLocaleString()} icon={<Lightbulb className="text-indigo-500" />} />
-          <StatCard label="Field Pilots" value={stateStats.pilots.toLocaleString()} icon={<Target className="text-purple-500" />} />
-          <StatCard label="Solutions Deployed" value={stateStats.deployed.toLocaleString()} icon={<Map className="text-emerald-500" />} />
-          <StatCard label="People Impacted" value={(stateStats.impacted / 1000000).toFixed(1) + 'M'} icon={<Users className="text-pink-500" />} badge="Measured" />
-        </div>
+        {loading ? (
+          <div className="h-32 flex items-center justify-center text-gray-500">Loading overview...</div>
+        ) : overview ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <StatCard label="Challenges Reported" value={overview.reported.value.toLocaleString()} icon={<Activity className="text-amber-500" />} />
+            <StatCard label="Verified" value={overview.verified.value.toLocaleString()} icon={<ShieldCheck className="text-blue-500" />} badge="Verified" />
+            <StatCard label="Innovation Projects" value={overview.activeProjects.value.toLocaleString()} icon={<Lightbulb className="text-indigo-500" />} />
+            <StatCard label="Field Pilots" value={overview.pilots.value.toLocaleString()} icon={<Target className="text-purple-500" />} />
+            <StatCard label="Solutions Deployed" value={overview.deployedSolutions.value.toLocaleString()} icon={<Map className="text-emerald-500" />} />
+            <StatCard label="People Impacted" value={(overview.beneficiaries.value / 1000000).toFixed(1) + 'M'} icon={<Users className="text-pink-500" />} badge="Measured" />
+          </div>
+        ) : null}
       </section>
 
       {/* How it works */}
