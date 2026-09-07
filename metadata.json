@@ -1,6 +1,6 @@
 {
-  "name": "JanaSamadhan — Public Transparency",
-  "description": "Public accountability, transparency, and open-information platform for Jharkhand's societal innovation ecosystem.",
+  "name": "JanaSamadhan — Public Transparency & Accountability",
+  "description": "Public transparency, accountability, and impact layer of the Jharkhand Societal Challenge & Collaborative Innovation ecosystem.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

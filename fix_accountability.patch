@@ -1,0 +1,11 @@
+--- src/views/AccountabilityView.tsx
++++ src/views/AccountabilityView.tsx
+@@ -250,7 +250,7 @@
+ 
+           <div className="space-y-4">
+             {nonCompliantAssets.map(asset => {
+-              const nc = asset.nonComplianceCaseId!;
++              const nc = CONTRACTUAL_NON_COMPLIANCE_CASES.find(c => c.caseId === asset.nonComplianceCaseId) || asset.nonComplianceCaseId as any;
+               return (
+                 <div
+                   key={asset.assetId}
