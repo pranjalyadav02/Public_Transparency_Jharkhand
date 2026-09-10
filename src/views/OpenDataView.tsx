@@ -21,25 +21,7 @@ export const OpenDataView: React.FC = () => {
   const [copiedEndpoint, setCopiedEndpoint] = useState<string | null>(null);
 
   const handleDownload = (datasetTitle: string, format: string) => {
-    // Generate an instant simulated client-side download blob
-    const sampleData = {
-      portal: "JanaSamadhan Jharkhand Public Open Data",
-      dataset: datasetTitle,
-      exportFormat: format,
-      timestamp: new Date().toISOString(),
-      license: "Open Government Data License (OGDL-India)",
-      dataStatus: "Official Open Record",
-      notice: "Zero PII included. PII fields purged prior to export."
-    };
-    const blob = new Blob([JSON.stringify(sampleData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${datasetTitle.toLowerCase().replace(/[^a-z0-9]/g, '_')}.${format.toLowerCase()}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    window.open(`/api/v1/transparency/opendata?format=${format.toLowerCase()}`, '_blank');
   };
 
   const copyToClipboard = (endpoint: string) => {

@@ -21,6 +21,11 @@ export const SubscribeModal: React.FC<SubscribeModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (contact.trim()) {
+      fetch('/api/v1/transparency/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: topicTitle, contact, method }),
+      }).catch(() => {});
       setSubscribed(true);
     }
   };
