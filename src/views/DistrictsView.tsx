@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { JHARKHAND_DISTRICTS, PUBLIC_CHALLENGES, PUBLIC_INFRASTRUCTURE_ASSETS } from '../data/mockData';
+import { JHARKHAND_DISTRICTS_GEO } from '../data/jharkhandMapData';
 import { DistrictMetric } from '../types';
 import { StatusBadge } from '../components/StatusBadge';
 import { 
@@ -164,6 +165,65 @@ export const DistrictsView: React.FC<DistrictsViewProps> = ({
                 )}
               </div>
             </div>
+
+            {/* Official MapsofIndia District Map Card */}
+            {(() => {
+              const geo = JHARKHAND_DISTRICTS_GEO.find(g => g.name.toLowerCase() === activeDistrict.name.toLowerCase());
+              if (!geo) return null;
+              return (
+                <div className="rounded-xl border border-slate-200 bg-slate-900 text-white overflow-hidden shadow-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-12">
+                    <div className="md:col-span-5 h-44 bg-slate-950 relative overflow-hidden group">
+                      <img
+                        src={geo.mapImage}
+                        alt={`${geo.name} District Map`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/maps/jharkhand/jharkhand-state-map.jpg';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none" />
+                      <div className="absolute bottom-2 left-2.5 right-2.5 flex items-center justify-between text-[11px]">
+                        <span className="font-mono bg-black/60 px-2 py-0.5 rounded text-emerald-400 border border-slate-700">
+                          MapsofIndia Reference
+                        </span>
+                        <a
+                          href={geo.sourceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="bg-emerald-600 hover:bg-emerald-500 px-2 py-0.5 rounded font-semibold text-white flex items-center gap-1"
+                        >
+                          <span>Full Map</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    </div>
+                    <div className="md:col-span-7 p-4 flex flex-col justify-between space-y-2">
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-mono uppercase font-bold text-emerald-400">
+                            {geo.division} Division
+                          </span>
+                          <span className="text-[11px] font-mono text-slate-400">
+                            Area: {geo.areaSqKm.toLocaleString()} sq km
+                          </span>
+                        </div>
+                        <h4 className="text-base font-bold text-white mt-0.5">
+                          {geo.name} District Geography &amp; Governance
+                        </h4>
+                        <p className="text-xs text-slate-300 mt-1 line-clamp-2 leading-relaxed">
+                          {geo.highlights}
+                        </p>
+                      </div>
+                      <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 font-mono">
+                        <span>Coordinates: {geo.lat.toFixed(2)}°N, {geo.lng.toFixed(2)}°E</span>
+                        <span>{geo.blocksCount} Administrative Blocks</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* 4 Core Indicators */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

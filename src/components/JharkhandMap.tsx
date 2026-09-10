@@ -1,7 +1,24 @@
 import React, { useState } from 'react';
 import { JHARKHAND_DISTRICTS } from '../data/mockData';
+import { JHARKHAND_STATE_MAP, JHARKHAND_DISTRICTS_GEO, JharkhandDistrictGeo } from '../data/jharkhandMapData';
 import { DistrictMetric } from '../types';
-import { MapPin, Search, Layers, CheckCircle2, AlertTriangle, ArrowRight, Eye } from 'lucide-react';
+import {
+  MapPin,
+  Search,
+  Layers,
+  CheckCircle2,
+  AlertTriangle,
+  ArrowRight,
+  Eye,
+  Maximize2,
+  ExternalLink,
+  X,
+  Compass,
+  Info,
+  Building2,
+  Users,
+  Map as MapIcon
+} from 'lucide-react';
 
 interface JharkhandMapProps {
   selectedDistrict: DistrictMetric | null;
@@ -9,128 +26,27 @@ interface JharkhandMapProps {
   filterMetric?: 'problems' | 'sla' | 'solutions' | 'impact';
 }
 
-// Approximate stylized relative layout positions (SVG grid coordinates 0-1000 x 0-800)
-// reflecting Jharkhand's geographical layout
-const DISTRICT_MAP_COORDS: Record<string, { cx: number; cy: number; path: string; division: string }> = {
-  // Palamu Division (North-West)
-  Garhwa: {
-    cx: 140, cy: 150, division: 'Palamu',
-    path: 'M 70,120 L 160,80 L 210,130 L 190,210 L 120,230 L 70,180 Z'
-  },
-  Palamu: {
-    cx: 240, cy: 210, division: 'Palamu',
-    path: 'M 190,210 L 210,130 L 290,140 L 320,220 L 280,290 L 210,270 Z'
-  },
-  Latehar: {
-    cx: 270, cy: 320, division: 'Palamu',
-    path: 'M 210,270 L 280,290 L 330,310 L 320,390 L 240,380 L 220,330 Z'
-  },
-
-  // North Chotanagpur (North-Central)
-  Chatra: {
-    cx: 350, cy: 190, division: 'North Chotanagpur',
-    path: 'M 290,140 L 380,130 L 410,200 L 370,260 L 320,220 Z'
-  },
-  Hazaribagh: {
-    cx: 440, cy: 250, division: 'North Chotanagpur',
-    path: 'M 370,260 L 410,200 L 490,210 L 510,280 L 450,310 L 380,310 Z'
-  },
-  Koderma: {
-    cx: 470, cy: 160, division: 'North Chotanagpur',
-    path: 'M 410,200 L 460,120 L 520,130 L 530,190 L 490,210 Z'
-  },
-  Giridih: {
-    cx: 580, cy: 210, division: 'North Chotanagpur',
-    path: 'M 520,130 L 610,120 L 660,180 L 640,260 L 530,250 L 530,190 Z'
-  },
-  Ramgarh: {
-    cx: 460, cy: 360, division: 'North Chotanagpur',
-    path: 'M 420,330 L 490,320 L 520,370 L 470,410 L 420,390 Z'
-  },
-  Bokaro: {
-    cx: 560, cy: 320, division: 'North Chotanagpur',
-    path: 'M 510,280 L 620,270 L 640,330 L 570,380 L 520,350 Z'
-  },
-  Dhanbad: {
-    cx: 650, cy: 300, division: 'North Chotanagpur',
-    path: 'M 620,270 L 690,260 L 720,320 L 660,360 L 630,330 Z'
-  },
-
-  // Santhal Pargana (North-East)
-  Deoghar: {
-    cx: 680, cy: 180, division: 'Santhal Pargana',
-    path: 'M 640,150 L 710,140 L 740,210 L 680,240 L 650,200 Z'
-  },
-  Dumka: {
-    cx: 760, cy: 210, division: 'Santhal Pargana',
-    path: 'M 710,140 L 780,130 L 820,200 L 790,280 L 730,250 L 730,200 Z'
-  },
-  Jamtara: {
-    cx: 710, cy: 280, division: 'Santhal Pargana',
-    path: 'M 670,240 L 740,240 L 760,310 L 700,330 L 670,280 Z'
-  },
-  Godda: {
-    cx: 810, cy: 130, division: 'Santhal Pargana',
-    path: 'M 770,90 L 850,90 L 860,160 L 800,180 L 770,140 Z'
-  },
-  Sahibganj: {
-    cx: 880, cy: 110, division: 'Santhal Pargana',
-    path: 'M 850,70 L 920,80 L 930,160 L 870,170 L 850,120 Z'
-  },
-  Pakur: {
-    cx: 870, cy: 200, division: 'Santhal Pargana',
-    path: 'M 830,170 L 910,160 L 910,240 L 840,250 L 820,200 Z'
-  },
-
-  // South Chotanagpur (Central & South-West)
-  Ranchi: {
-    cx: 440, cy: 450, division: 'South Chotanagpur',
-    path: 'M 360,400 L 460,390 L 510,430 L 500,510 L 410,530 L 360,480 Z'
-  },
-  Lohardaga: {
-    cx: 320, cy: 410, division: 'South Chotanagpur',
-    path: 'M 280,380 L 350,380 L 370,440 L 310,460 L 270,420 Z'
-  },
-  Gumla: {
-    cx: 280, cy: 500, division: 'South Chotanagpur',
-    path: 'M 220,440 L 330,440 L 340,540 L 290,600 L 210,550 Z'
-  },
-  Simdega: {
-    cx: 270, cy: 640, division: 'South Chotanagpur',
-    path: 'M 220,580 L 310,580 L 350,650 L 310,720 L 230,700 Z'
-  },
-  Khunti: {
-    cx: 430, cy: 560, division: 'South Chotanagpur',
-    path: 'M 370,520 L 480,510 L 490,590 L 410,620 L 360,580 Z'
-  },
-
-  // Kolhan (South-East)
-  'Saraikela Kharsawan': {
-    cx: 550, cy: 540, division: 'Kolhan',
-    path: 'M 490,500 L 590,490 L 620,560 L 560,610 L 490,570 Z'
-  },
-  'East Singhbhum': {
-    cx: 660, cy: 580, division: 'Kolhan',
-    path: 'M 600,520 L 710,510 L 730,620 L 650,670 L 610,610 Z'
-  },
-  'West Singhbhum': {
-    cx: 460, cy: 680, division: 'Kolhan',
-    path: 'M 370,610 L 510,600 L 550,670 L 500,770 L 400,760 L 350,680 Z'
-  }
-};
-
 export const JharkhandMap: React.FC<JharkhandMapProps> = ({
   selectedDistrict,
-  onSelectDistrict
+  onSelectDistrict,
 }) => {
   const [activeMetric, setActiveMetric] = useState<'problems' | 'sla' | 'solutions' | 'reality'>('problems');
   const [hoveredDistrict, setHoveredDistrict] = useState<DistrictMetric | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'map' | 'grid'>('map');
+  const [viewMode, setViewMode] = useState<'vector' | 'official' | 'grid'>('vector');
+  const [activeDivision, setActiveDivision] = useState<string>('All');
+  const [modalDistrictGeo, setModalDistrictGeo] = useState<JharkhandDistrictGeo | null>(null);
+  const [imageZoom, setImageZoom] = useState<boolean>(false);
+
+  // Active district fallback (if none hovered, use selected, or default to Gumla / first)
+  const currentDistrict = hoveredDistrict || selectedDistrict || JHARKHAND_DISTRICTS[0];
+  const currentGeo = JHARKHAND_DISTRICTS_GEO.find(
+    g => g.name.toLowerCase() === currentDistrict.name.toLowerCase()
+  ) || JHARKHAND_DISTRICTS_GEO[0];
 
   const getDistrictFill = (districtName: string) => {
     const data = JHARKHAND_DISTRICTS.find(d => d.name === districtName);
-    if (!data) return '#e2e8f0';
+    if (!data) return '#334155';
 
     const isSelected = selectedDistrict?.name === districtName;
     const isHovered = hoveredDistrict?.name === districtName;
@@ -139,9 +55,9 @@ export const JharkhandMap: React.FC<JharkhandMapProps> = ({
     if (isHovered) return '#10b981'; // Emerald-500
 
     if (activeMetric === 'sla') {
-      if (data.slaCompliance >= 90) return '#10b981'; // Emerald
-      if (data.slaCompliance >= 85) return '#34d399'; // Light emerald
-      if (data.slaCompliance >= 80) return '#fbbf24'; // Amber
+      if (data.slaCompliance >= 92) return '#10b981'; // Emerald
+      if (data.slaCompliance >= 88) return '#34d399'; // Light emerald
+      if (data.slaCompliance >= 84) return '#fbbf24'; // Amber
       return '#f87171'; // Red
     }
 
@@ -164,158 +80,181 @@ export const JharkhandMap: React.FC<JharkhandMapProps> = ({
     return '#f59e0b'; // Amber
   };
 
-  const filteredDistricts = JHARKHAND_DISTRICTS.filter(d =>
-    d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    d.headquarters.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredDistricts = JHARKHAND_DISTRICTS.filter(d => {
+    const matchesSearch =
+      d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      d.headquarters.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    if (activeDivision === 'All') return matchesSearch;
+    const geo = JHARKHAND_DISTRICTS_GEO.find(g => g.name.toLowerCase() === d.name.toLowerCase());
+    return matchesSearch && geo?.division === activeDivision;
+  });
 
   return (
-    <div className="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
       {/* Map Header Controls */}
-      <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50/90 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <h3 className="text-base font-bold text-slate-900">
-              Interactive State of Jharkhand Impact Map
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Compass className="w-4 h-4 text-emerald-600" />
+              Jharkhand 24-District Interactive Cartographic Portal
             </h3>
-            <span className="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-mono font-medium">
+            <span className="text-xs bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full font-mono font-semibold">
               24 / 24 Districts
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Click any district to reveal local blocks, active projects, SLA performance, and verified community reality check.
+            Official district boundary maps sourced from MapsofIndia reference with live SLA, active innovation, and verified community audit metrics.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Metric Filter Tabs */}
-          <div className="flex items-center bg-slate-200/80 p-1 rounded-lg text-xs font-medium text-slate-700">
-            <button
-              onClick={() => setActiveMetric('problems')}
-              className={`px-2.5 py-1 rounded transition ${
-                activeMetric === 'problems' ? 'bg-white text-slate-900 shadow-2xs font-semibold' : 'hover:text-slate-900'
-              }`}
-            >
-              Challenges Volume
-            </button>
-            <button
-              onClick={() => setActiveMetric('sla')}
-              className={`px-2.5 py-1 rounded transition ${
-                activeMetric === 'sla' ? 'bg-white text-slate-900 shadow-2xs font-semibold' : 'hover:text-slate-900'
-              }`}
-            >
-              SLA Compliance
-            </button>
-            <button
-              onClick={() => setActiveMetric('solutions')}
-              className={`px-2.5 py-1 rounded transition ${
-                activeMetric === 'solutions' ? 'bg-white text-slate-900 shadow-2xs font-semibold' : 'hover:text-slate-900'
-              }`}
-            >
-              Solutions Deployed
-            </button>
-            <button
-              onClick={() => setActiveMetric('reality')}
-              className={`px-2.5 py-1 rounded transition ${
-                activeMetric === 'reality' ? 'bg-white text-slate-900 shadow-2xs font-semibold' : 'hover:text-slate-900'
-              }`}
-            >
-              Reality Check %
-            </button>
-          </div>
+          {viewMode === 'vector' && (
+            <div className="flex items-center bg-slate-200/80 p-1 rounded-lg text-xs font-medium text-slate-700">
+              <button
+                onClick={() => setActiveMetric('problems')}
+                className={`px-2.5 py-1 rounded transition ${
+                  activeMetric === 'problems' ? 'bg-white text-slate-900 shadow-2xs font-semibold' : 'hover:text-slate-900'
+                }`}
+              >
+                Challenges
+              </button>
+              <button
+                onClick={() => setActiveMetric('sla')}
+                className={`px-2.5 py-1 rounded transition ${
+                  activeMetric === 'sla' ? 'bg-white text-slate-900 shadow-2xs font-semibold' : 'hover:text-slate-900'
+                }`}
+              >
+                SLA Compliance
+              </button>
+              <button
+                onClick={() => setActiveMetric('solutions')}
+                className={`px-2.5 py-1 rounded transition ${
+                  activeMetric === 'solutions' ? 'bg-white text-slate-900 shadow-2xs font-semibold' : 'hover:text-slate-900'
+                }`}
+              >
+                Solutions
+              </button>
+              <button
+                onClick={() => setActiveMetric('reality')}
+                className={`px-2.5 py-1 rounded transition ${
+                  activeMetric === 'reality' ? 'bg-white text-slate-900 shadow-2xs font-semibold' : 'hover:text-slate-900'
+                }`}
+              >
+                Reality %
+              </button>
+            </div>
+          )}
 
-          {/* Toggle Map / Grid View */}
+          {/* Toggle Map / Official Map / Grid View */}
           <div className="flex items-center bg-slate-200/80 p-1 rounded-lg text-xs font-medium text-slate-700">
             <button
-              onClick={() => setViewMode('map')}
-              className={`px-2.5 py-1 rounded transition ${
-                viewMode === 'map' ? 'bg-white text-slate-900 shadow-2xs font-semibold' : 'hover:text-slate-900'
+              onClick={() => setViewMode('vector')}
+              className={`px-3 py-1 rounded transition flex items-center gap-1.5 ${
+                viewMode === 'vector' ? 'bg-white text-emerald-800 shadow-2xs font-semibold' : 'hover:text-slate-900'
               }`}
             >
-              Map View
+              <Compass className="w-3.5 h-3.5" />
+              Vector Map
+            </button>
+            <button
+              onClick={() => setViewMode('official')}
+              className={`px-3 py-1 rounded transition flex items-center gap-1.5 ${
+                viewMode === 'official' ? 'bg-white text-emerald-800 shadow-2xs font-semibold' : 'hover:text-slate-900'
+              }`}
+            >
+              <MapIcon className="w-3.5 h-3.5" />
+              Official State Map
             </button>
             <button
               onClick={() => setViewMode('grid')}
-              className={`px-2.5 py-1 rounded transition ${
-                viewMode === 'grid' ? 'bg-white text-slate-900 shadow-2xs font-semibold' : 'hover:text-slate-900'
+              className={`px-3 py-1 rounded transition flex items-center gap-1.5 ${
+                viewMode === 'grid' ? 'bg-white text-emerald-800 shadow-2xs font-semibold' : 'hover:text-slate-900'
               }`}
             >
-              Grid View
+              <Layers className="w-3.5 h-3.5" />
+              District Cards
             </button>
           </div>
         </div>
       </div>
 
-      {/* Main Map or Grid */}
-      {viewMode === 'map' ? (
-        <div className="relative p-4 sm:p-6 bg-slate-900/95 flex flex-col lg:flex-row items-center justify-between gap-6 overflow-hidden">
+      {/* VIEW MODE 1: Interactive SVG Vector Map */}
+      {viewMode === 'vector' && (
+        <div className="relative p-4 sm:p-6 bg-slate-950 flex flex-col lg:flex-row items-center justify-between gap-6 overflow-hidden">
           {/* SVG Map Container */}
-          <div className="relative w-full max-w-2xl aspect-[5/4]">
+          <div className="relative w-full max-w-2xl aspect-[5/4] flex items-center justify-center">
             <svg
               viewBox="0 0 1000 800"
-              className="w-full h-full drop-shadow-xl select-none"
+              className="w-full h-full drop-shadow-2xl select-none"
               xmlns="http://www.w3.org/2000/svg"
             >
               <defs>
                 <pattern id="grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#334155" strokeWidth="0.5" strokeOpacity="0.4" />
+                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" strokeWidth="0.6" strokeOpacity="0.5" />
                 </pattern>
                 <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="#000" floodOpacity="0.6"/>
+                  <feDropShadow dx="0" dy="2" stdDeviation="6" floodColor="#10b981" floodOpacity="0.8"/>
+                </filter>
+                <filter id="hoverGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="#38bdf8" floodOpacity="0.6"/>
                 </filter>
               </defs>
 
               {/* Background grid */}
+              <rect width="1000" height="800" fill="#090d16" />
               <rect width="1000" height="800" fill="url(#grid-pattern)" />
 
               {/* District polygons */}
-              {Object.entries(DISTRICT_MAP_COORDS).map(([districtName, coords]) => {
-                const districtData = JHARKHAND_DISTRICTS.find(d => d.name === districtName);
+              {JHARKHAND_DISTRICTS_GEO.map((geo) => {
+                const districtData = JHARKHAND_DISTRICTS.find(d => d.name.toLowerCase() === geo.name.toLowerCase());
                 if (!districtData) return null;
 
-                const isSelected = selectedDistrict?.name === districtName;
-                const isHovered = hoveredDistrict?.name === districtName;
+                const isSelected = selectedDistrict?.name.toLowerCase() === geo.name.toLowerCase();
+                const isHovered = hoveredDistrict?.name.toLowerCase() === geo.name.toLowerCase();
 
                 return (
                   <g
-                    key={districtName}
+                    key={geo.name}
                     className="cursor-pointer transition-transform duration-150"
                     onClick={() => onSelectDistrict(districtData)}
                     onMouseEnter={() => setHoveredDistrict(districtData)}
                     onMouseLeave={() => setHoveredDistrict(null)}
                   >
                     <path
-                      d={coords.path}
-                      fill={getDistrictFill(districtName)}
-                      stroke={isSelected ? '#ffffff' : '#1e293b'}
-                      strokeWidth={isSelected ? 3 : 1.5}
+                      d={geo.path}
+                      fill={getDistrictFill(districtData.name)}
+                      stroke={isSelected ? '#34d399' : isHovered ? '#38bdf8' : '#1e293b'}
+                      strokeWidth={isSelected ? 3.5 : isHovered ? 2.5 : 1.2}
                       className="transition-colors duration-200 hover:opacity-95"
-                      filter={isSelected ? 'url(#glow)' : undefined}
+                      filter={isSelected ? 'url(#glow)' : isHovered ? 'url(#hoverGlow)' : undefined}
                     />
 
                     {/* District Name Label */}
                     <text
-                      x={coords.cx}
-                      y={coords.cy - 6}
+                      x={geo.cx}
+                      y={geo.cy - 6}
                       textAnchor="middle"
                       fill="#ffffff"
                       fontSize="12"
                       fontWeight="bold"
-                      className="pointer-events-none drop-shadow-xs tracking-tight"
+                      className="pointer-events-none drop-shadow-md tracking-tight"
                     >
-                      {districtName}
+                      {geo.name}
                     </text>
 
                     {/* Metric indicator badge text */}
                     <text
-                      x={coords.cx}
-                      y={coords.cy + 10}
+                      x={geo.cx}
+                      y={geo.cy + 10}
                       textAnchor="middle"
                       fill="#e2e8f0"
                       fontSize="9.5"
                       fontFamily="monospace"
-                      className="pointer-events-none drop-shadow-xs"
+                      className="pointer-events-none drop-shadow-md"
                     >
                       {activeMetric === 'problems' && `${districtData.problemsReported} cases`}
                       {activeMetric === 'sla' && `${districtData.slaCompliance}% SLA`}
@@ -326,9 +265,9 @@ export const JharkhandMap: React.FC<JharkhandMapProps> = ({
                     {/* Active pulse pin if selected */}
                     {isSelected && (
                       <circle
-                        cx={coords.cx}
-                        cy={coords.cy - 20}
-                        r="5"
+                        cx={geo.cx}
+                        cy={geo.cy - 22}
+                        r="6"
                         fill="#fbbf24"
                         className="animate-bounce pointer-events-none"
                       />
@@ -339,14 +278,14 @@ export const JharkhandMap: React.FC<JharkhandMapProps> = ({
             </svg>
 
             {/* Map Legend Overlay */}
-            <div className="absolute bottom-3 left-3 bg-slate-900/90 backdrop-blur-xs p-3 rounded-lg border border-slate-700/80 text-white text-xs max-w-xs space-y-1.5 pointer-events-none">
+            <div className="absolute bottom-3 left-3 bg-slate-900/90 backdrop-blur-md p-3 rounded-lg border border-slate-700/80 text-white text-xs max-w-xs space-y-1.5 pointer-events-none">
               <div className="flex items-center justify-between font-semibold text-slate-300 pb-1 border-b border-slate-700">
                 <span>Legend ({activeMetric.toUpperCase()})</span>
-                <span className="text-[10px] text-slate-400">State Avg: 87.2% SLA</span>
+                <span className="text-[10px] text-emerald-400">24 Districts Linked</span>
               </div>
               <div className="flex items-center gap-2 text-[11px]">
                 <span className="w-3 h-3 rounded bg-emerald-500" />
-                <span className="text-slate-300">High / Satisfactory Band</span>
+                <span className="text-slate-300">High / Satisfactory SLA</span>
               </div>
               <div className="flex items-center gap-2 text-[11px]">
                 <span className="w-3 h-3 rounded bg-amber-400" />
@@ -360,159 +299,519 @@ export const JharkhandMap: React.FC<JharkhandMapProps> = ({
           </div>
 
           {/* District Spotlight Panel (Live Hover or Selection) */}
-          <div className="w-full lg:w-80 bg-slate-800/90 backdrop-blur-md rounded border border-slate-700 p-5 text-white flex flex-col justify-between self-stretch">
-            { (hoveredDistrict || selectedDistrict) ? (
-
-
-              <div>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-emerald-400">
-                      District Profile
-                    </span>
-                    <h4 className="text-xl font-extrabold text-white flex items-center gap-2">
-                      {(hoveredDistrict || selectedDistrict)!.name}
-                    </h4>
-                    <p className="text-xs text-slate-400">
-                      HQ: {(hoveredDistrict || selectedDistrict)!.headquarters} • Pop: {(hoveredDistrict || selectedDistrict)!.population}
-                    </p>
-                  </div>
-                  <span className="px-2 py-0.5 bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-mono font-bold rounded">
-                    {(hoveredDistrict || selectedDistrict)!.code}
+          <div className="w-full lg:w-96 bg-slate-900/95 backdrop-blur-md rounded-xl border border-slate-700/80 p-5 text-white flex flex-col justify-between self-stretch shadow-2xl">
+            <div>
+              {/* Header with District Name and Map Image Preview */}
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-emerald-400 flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    {currentGeo.division} Division
                   </span>
+                  <h4 className="text-2xl font-black text-white flex items-center gap-2 mt-0.5">
+                    {currentDistrict.name}
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    HQ: <span className="text-slate-200 font-semibold">{currentGeo.headquarters}</span> • Pop: {currentGeo.population}
+                  </p>
                 </div>
-
-                {/* Metrics 2x2 */}
-                <div className="grid grid-cols-2 gap-2.5 my-4">
-                  <div className="bg-slate-900/80 p-2.5 rounded-lg border border-slate-700/60">
-                    <span className="text-[10px] text-slate-400 block">Reported Issues</span>
-                    <span className="text-lg font-bold text-white font-mono">
-                      {(hoveredDistrict || selectedDistrict)!.problemsReported.toLocaleString()}
-                    </span>
-                    <span className="text-[10px] text-emerald-400 block">
-                      {(hoveredDistrict || selectedDistrict)!.problemsVerified} verified
-                    </span>
-                  </div>
-                  <div className="bg-slate-900/80 p-2.5 rounded-lg border border-slate-700/60">
-                    <span className="text-[10px] text-slate-400 block">SLA Compliance</span>
-                    <span className="text-lg font-bold text-amber-300 font-mono">
-                      {(hoveredDistrict || selectedDistrict)!.slaCompliance}%
-                    </span>
-                    <span className="text-[10px] text-slate-400 block">
-                      {(hoveredDistrict || selectedDistrict)!.avgResolutionDays}d avg resolution
-                    </span>
-                  </div>
-                  <div className="bg-slate-900/80 p-2.5 rounded-lg border border-slate-700/60">
-                    <span className="text-[10px] text-slate-400 block">Active Projects</span>
-                    <span className="text-lg font-bold text-indigo-300 font-mono">
-                      {(hoveredDistrict || selectedDistrict)!.activeProjects}
-                    </span>
-                    <span className="text-[10px] text-slate-400 block">
-                      {(hoveredDistrict || selectedDistrict)!.solutionsDeployed} deployed
-                    </span>
-                  </div>
-                  <div className="bg-slate-900/80 p-2.5 rounded-lg border border-slate-700/60">
-                    <span className="text-[10px] text-slate-400 block">Citizen Reality</span>
-                    <span className="text-lg font-bold text-emerald-300 font-mono">
-                      {(hoveredDistrict || selectedDistrict)!.communityConfirmationAvg}%
-                    </span>
-                    <span className="text-[10px] text-slate-400 block">
-                      Community audit score
-                    </span>
-                  </div>
-                </div>
-
-                {/* Local Blocks Preview */}
-                <div className="mb-4">
-                  <span className="text-xs font-semibold text-slate-300 block mb-1.5">
-                    Local Administrative Blocks ({(hoveredDistrict || selectedDistrict)!.blocks.length}):
-                  </span>
-                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
-                    {(hoveredDistrict || selectedDistrict)!.blocks.map(block => (
-                      <span
-                        key={block.name}
-                        className="text-[11px] bg-slate-700/80 border border-slate-600 px-2 py-0.5 rounded text-slate-200"
-                      >
-                        {block.name} ({block.reported})
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => onSelectDistrict((hoveredDistrict || selectedDistrict)!)}
-                  className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg flex items-center justify-center gap-2 transition"
-                >
-                  <span>Open Full District Transparency Profile</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+                <span className="px-2.5 py-1 bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-mono font-bold rounded-md">
+                  {currentDistrict.code}
+                </span>
               </div>
-            ) : (
-              <div className="py-12 text-center text-slate-400 space-y-3">
-                <MapPin className="w-10 h-10 mx-auto text-slate-600 animate-pulse" />
-                <p className="text-xs text-slate-300">
-                  Hover or click any of Jharkhand's 24 districts to view live transparency indicators and local block drill-downs.
-                </p>
-                <div className="text-[11px] text-slate-500">
-                  Popular: Gumla, Ranchi, Dhanbad, East Singhbhum, Dumka
+
+              {/* District Official Map Thumbnail Card */}
+              <div className="mt-3 relative rounded-lg overflow-hidden border border-slate-700 bg-slate-950 group">
+                <img
+                  src={currentGeo.mapImage}
+                  alt={`${currentDistrict.name} District Map`}
+                  onError={(e) => {
+                    // Fallback to state map if local image fails
+                    (e.target as HTMLImageElement).src = JHARKHAND_STATE_MAP.imageUrl;
+                  }}
+                  className="w-full h-32 object-cover object-center group-hover:scale-105 transition-transform duration-300 cursor-pointer"
+                  onClick={() => setModalDistrictGeo(currentGeo)}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute bottom-2 left-2.5 right-2.5 flex items-center justify-between pointer-events-none">
+                  <span className="text-[10px] font-mono bg-slate-900/90 px-2 py-0.5 rounded text-slate-300 border border-slate-700">
+                    Official MapsofIndia Reference
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setModalDistrictGeo(currentGeo);
+                    }}
+                    className="pointer-events-auto p-1 bg-emerald-600/90 hover:bg-emerald-500 text-white rounded text-[10px] font-semibold flex items-center gap-1 px-2"
+                  >
+                    <Maximize2 className="w-3 h-3" />
+                    Expand Map
+                  </button>
                 </div>
               </div>
-            )}
+
+              {/* Highlights excerpt */}
+              <p className="text-[11px] text-slate-300 mt-2.5 leading-relaxed bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/60">
+                {currentGeo.highlights}
+              </p>
+
+              {/* Metrics 2x2 */}
+              <div className="grid grid-cols-2 gap-2 my-3">
+                <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block font-mono">Reported Issues</span>
+                  <span className="text-lg font-bold text-white font-mono">
+                    {currentDistrict.problemsReported.toLocaleString()}
+                  </span>
+                  <span className="text-[10px] text-emerald-400 block font-mono">
+                    {currentDistrict.problemsVerified} verified
+                  </span>
+                </div>
+                <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block font-mono">SLA Compliance</span>
+                  <span className="text-lg font-bold text-amber-300 font-mono">
+                    {currentDistrict.slaCompliance}%
+                  </span>
+                  <span className="text-[10px] text-slate-400 block font-mono">
+                    {currentDistrict.avgResolutionDays}d avg time
+                  </span>
+                </div>
+                <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block font-mono">Innovation Projects</span>
+                  <span className="text-lg font-bold text-indigo-300 font-mono">
+                    {currentDistrict.activeProjects}
+                  </span>
+                  <span className="text-[10px] text-slate-400 block font-mono">
+                    {currentDistrict.solutionsDeployed} deployed
+                  </span>
+                </div>
+                <div className="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block font-mono">Community Reality</span>
+                  <span className="text-lg font-bold text-emerald-300 font-mono">
+                    {currentDistrict.communityConfirmationAvg}%
+                  </span>
+                  <span className="text-[10px] text-slate-400 block font-mono">
+                    Verified score
+                  </span>
+                </div>
+              </div>
+
+              {/* Administrative Blocks */}
+              <div className="mb-3">
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <span className="font-semibold text-slate-300">
+                    Administrative Blocks ({currentGeo.blocksCount}):
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    Area: {currentGeo.areaSqKm.toLocaleString()} km²
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto pr-1">
+                  {currentGeo.keyBlocks.map(blockName => (
+                    <span
+                      key={blockName}
+                      className="text-[10px] bg-slate-800 border border-slate-700 px-2 py-0.5 rounded text-slate-300"
+                    >
+                      {blockName}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-2 border-t border-slate-800">
+              <button
+                onClick={() => onSelectDistrict(currentDistrict)}
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-950"
+              >
+                <span>Explore Full {currentDistrict.name} Dossier</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+
+              <a
+                href={currentGeo.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium rounded-lg flex items-center justify-center gap-1.5 transition border border-slate-700"
+              >
+                <span>View on MapsofIndia.com</span>
+                <ExternalLink className="w-3 h-3 text-slate-400" />
+              </a>
+            </div>
           </div>
         </div>
-      ) : (
-        /* Grid View of all 24 districts */
-        <div className="p-5">
-          <div className="mb-4 max-w-sm">
-            <div className="relative">
+      )}
+
+      {/* VIEW MODE 2: Official MapsofIndia State Map */}
+      {viewMode === 'official' && (
+        <div className="p-4 sm:p-6 bg-slate-900 text-white space-y-5">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 bg-slate-800/80 p-4 rounded-xl border border-slate-700">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-xs font-mono font-bold border border-emerald-500/30">
+                  Cartographic Reference
+                </span>
+                <h4 className="text-lg font-bold text-white">
+                  Official Jharkhand State District Map
+                </h4>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                Authoritative 24-district boundaries, state borders, national highways, and river systems from MapsofIndia.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setImageZoom(!imageZoom)}
+                className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+                {imageZoom ? 'Fit to Screen' : 'Zoom HD'}
+              </button>
+              <a
+                href={JHARKHAND_STATE_MAP.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition"
+              >
+                <span>Open Source Reference</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          </div>
+
+          {/* Division Selector Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+            <span className="text-slate-400 text-xs font-mono">Division Filter:</span>
+            {['All', 'Palamu', 'North Chotanagpur', 'Santhal Pargana', 'South Chotanagpur', 'Kolhan'].map(div => (
+              <button
+                key={div}
+                onClick={() => setActiveDivision(div)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition ${
+                  activeDivision === div
+                    ? 'bg-emerald-600 text-white font-bold'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                }`}
+              >
+                {div}
+              </button>
+            ))}
+          </div>
+
+          {/* State Map Graphic Container with Quick Selectors */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            {/* Map Frame (8 cols) */}
+            <div className="lg:col-span-8 bg-slate-950 rounded-xl border border-slate-700 p-3 overflow-hidden flex flex-col items-center justify-center relative">
+              <div className={`w-full overflow-auto ${imageZoom ? 'max-h-[750px]' : 'max-h-[520px]'} flex justify-center`}>
+                <img
+                  src={JHARKHAND_STATE_MAP.imageUrl}
+                  alt="Jharkhand State District Map from MapsofIndia"
+                  className={`rounded-lg object-contain transition-all duration-300 ${
+                    imageZoom ? 'min-w-[950px]' : 'max-w-full'
+                  }`}
+                />
+              </div>
+
+              <div className="w-full mt-2.5 pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+                <span>Source: {JHARKHAND_STATE_MAP.source}</span>
+                <span>Area: {JHARKHAND_STATE_MAP.totalAreaSqKm.toLocaleString()} sq km • 24 Districts</span>
+              </div>
+            </div>
+
+            {/* Districts Quick Navigation (4 cols) */}
+            <div className="lg:col-span-4 bg-slate-800/90 rounded-xl border border-slate-700 p-4 flex flex-col justify-between max-h-[580px]">
+              <div>
+                <h5 className="font-bold text-sm text-white flex items-center gap-2 mb-2">
+                  <MapPin className="w-4 h-4 text-emerald-400" />
+                  Select District Map ({filteredDistricts.length})
+                </h5>
+                <p className="text-xs text-slate-400 mb-3">
+                  Click any district to inspect its dedicated cartographic map and local administrative indicators:
+                </p>
+
+                <div className="space-y-1.5 max-h-[380px] overflow-y-auto pr-1">
+                  {filteredDistricts.map(d => {
+                    const geo = JHARKHAND_DISTRICTS_GEO.find(g => g.name.toLowerCase() === d.name.toLowerCase());
+                    const isSelected = selectedDistrict?.name === d.name;
+
+                    return (
+                      <div
+                        key={d.name}
+                        onClick={() => {
+                          onSelectDistrict(d);
+                          if (geo) setModalDistrictGeo(geo);
+                        }}
+                        className={`p-2 rounded-lg border text-left cursor-pointer transition flex items-center justify-between ${
+                          isSelected
+                            ? 'bg-emerald-950/80 border-emerald-500 text-white'
+                            : 'bg-slate-900/80 border-slate-700/80 text-slate-200 hover:border-slate-500 hover:bg-slate-900'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={geo?.mapImage}
+                            alt=""
+                            className="w-8 h-8 rounded object-cover border border-slate-600 shrink-0"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                          <div>
+                            <div className="font-bold text-xs">{d.name}</div>
+                            <div className="text-[10px] text-slate-400">
+                              HQ: {d.headquarters} • {geo?.division}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-right font-mono text-[10px]">
+                          <span className="text-emerald-400 font-semibold">{d.slaCompliance}% SLA</span>
+                          <span className="block text-slate-400">{d.problemsReported} cases</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mt-3 pt-3 border-t border-slate-700 text-[11px] text-slate-400 flex items-center justify-between">
+                <span>Capital: {JHARKHAND_STATE_MAP.capital}</span>
+                <span>Sub-Capital: {JHARKHAND_STATE_MAP.subCapital}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW MODE 3: Grid Cards for all 24 Districts */}
+      {viewMode === 'grid' && (
+        <div className="p-5 bg-slate-50">
+          <div className="mb-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="relative max-w-sm w-full">
               <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Filter districts by name..."
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                placeholder="Search any of 24 districts by name or HQ..."
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-emerald-500 shadow-2xs"
               />
+            </div>
+
+            <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
+              <span className="text-slate-500 text-xs font-mono">Division:</span>
+              {['All', 'Palamu', 'North Chotanagpur', 'Santhal Pargana', 'South Chotanagpur', 'Kolhan'].map(div => (
+                <button
+                  key={div}
+                  onClick={() => setActiveDivision(div)}
+                  className={`px-2.5 py-1 rounded text-xs font-medium transition ${
+                    activeDivision === div
+                      ? 'bg-emerald-600 text-white font-bold shadow-2xs'
+                      : 'bg-white text-slate-600 hover:bg-slate-200 border border-slate-200'
+                  }`}
+                >
+                  {div}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-[500px] overflow-y-auto pr-2">
-            {filteredDistricts.map(district => (
-              <div
-                key={district.name}
-                onClick={() => onSelectDistrict(district)}
-                className={`p-3.5 rounded-lg border text-left cursor-pointer transition ${
-                  selectedDistrict?.name === district.name
-                    ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-500/20'
-                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <h5 className="font-bold text-sm text-slate-900">{district.name}</h5>
-                  <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 bg-slate-100 rounded text-slate-600">
-                    {district.code}
-                  </span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[600px] overflow-y-auto pr-2">
+            {filteredDistricts.map(district => {
+              const geo = JHARKHAND_DISTRICTS_GEO.find(g => g.name.toLowerCase() === district.name.toLowerCase());
+              const isSelected = selectedDistrict?.name === district.name;
+
+              return (
+                <div
+                  key={district.name}
+                  onClick={() => onSelectDistrict(district)}
+                  className={`rounded-xl border text-left cursor-pointer transition overflow-hidden group shadow-xs ${
+                    isSelected
+                      ? 'border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-500/30'
+                      : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-md'
+                  }`}
+                >
+                  {/* Thumbnail */}
+                  <div className="h-28 bg-slate-800 relative overflow-hidden">
+                    <img
+                      src={geo?.mapImage}
+                      alt={district.name}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = JHARKHAND_STATE_MAP.imageUrl;
+                      }}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute bottom-2 left-2.5 right-2.5 flex items-center justify-between text-white">
+                      <span className="font-bold text-sm drop-shadow-md">{district.name}</span>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 bg-black/60 rounded border border-white/20">
+                        {district.code}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Body */}
+                  <div className="p-3.5 space-y-2.5">
+                    <div className="flex items-center justify-between text-[11px] text-slate-500">
+                      <span>HQ: <strong className="text-slate-700">{district.headquarters}</strong></span>
+                      <span className="font-mono text-emerald-700 font-semibold">{geo?.division}</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1.5 text-xs bg-slate-50 p-2 rounded-lg border border-slate-100 font-mono">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block">Reported</span>
+                        <span className="font-bold text-slate-800">{district.problemsReported}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block">SLA</span>
+                        <span className="font-bold text-emerald-600">{district.slaCompliance}%</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block">Projects</span>
+                        <span className="font-bold text-indigo-700">{district.activeProjects}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block">Reality</span>
+                        <span className="font-bold text-slate-700">{district.communityConfirmationAvg}%</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (geo) setModalDistrictGeo(geo);
+                        }}
+                        className="text-[11px] text-emerald-700 hover:text-emerald-800 font-semibold flex items-center gap-1"
+                      >
+                        <Eye className="w-3 h-3" />
+                        District Map
+                      </button>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {geo?.blocksCount} Blocks
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-2 grid grid-cols-2 gap-1.5 text-xs">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block">Reported</span>
-                    <span className="font-semibold text-slate-800">{district.problemsReported}</span>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: High-Resolution District Map Inspector */}
+      {modalDistrictGeo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden text-white flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-slate-700 flex items-center justify-between bg-slate-950">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-400">
+                  <MapPin className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-white">
+                      {modalDistrictGeo.name} District Official Cartographic Map
+                    </h3>
+                    <span className="px-2 py-0.5 bg-slate-800 text-emerald-400 rounded text-xs font-mono border border-slate-700">
+                      {modalDistrictGeo.code}
+                    </span>
                   </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block">SLA</span>
-                    <span className="font-semibold text-emerald-700">{district.slaCompliance}%</span>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Division: {modalDistrictGeo.division} • Headquarters: {modalDistrictGeo.headquarters} • Area: {modalDistrictGeo.areaSqKm.toLocaleString()} sq km
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setModalDistrictGeo(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-4">
+              {/* Map Image Stage */}
+              <div className="bg-slate-950 rounded-xl border border-slate-800 p-2 flex items-center justify-center overflow-auto max-h-[460px]">
+                <img
+                  src={modalDistrictGeo.mapImage}
+                  alt={`${modalDistrictGeo.name} Map`}
+                  className="max-h-[440px] max-w-full object-contain rounded-lg shadow-lg"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = JHARKHAND_STATE_MAP.imageUrl;
+                  }}
+                />
+              </div>
+
+              {/* District Facts & Blocks */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2 bg-slate-800/80 p-4 rounded-xl border border-slate-700/80 space-y-2">
+                  <h5 className="text-xs font-bold font-mono uppercase tracking-wider text-emerald-400">
+                    Geographic &amp; Strategic Profile
+                  </h5>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    {modalDistrictGeo.highlights}
+                  </p>
+                  <div className="pt-2">
+                    <span className="text-xs font-semibold text-slate-200 block mb-1.5">
+                      Key Administrative Blocks ({modalDistrictGeo.blocksCount}):
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {modalDistrictGeo.keyBlocks.map(b => (
+                        <span
+                          key={b}
+                          className="text-[11px] bg-slate-900 border border-slate-700 px-2 py-0.5 rounded text-slate-300"
+                        >
+                          {b}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block">Projects</span>
-                    <span className="font-semibold text-slate-800">{district.activeProjects}</span>
+                </div>
+
+                <div className="bg-slate-800/80 p-4 rounded-xl border border-slate-700/80 space-y-3 font-mono text-xs">
+                  <h5 className="font-bold text-slate-200 border-b border-slate-700 pb-1.5">
+                    District Metrics
+                  </h5>
+                  <div className="flex justify-between text-slate-300">
+                    <span className="text-slate-400">Population:</span>
+                    <span>{modalDistrictGeo.population}</span>
                   </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block">Reality</span>
-                    <span className="font-semibold text-indigo-700">{district.communityConfirmationAvg}%</span>
+                  <div className="flex justify-between text-slate-300">
+                    <span className="text-slate-400">Area:</span>
+                    <span>{modalDistrictGeo.areaSqKm.toLocaleString()} km²</span>
+                  </div>
+                  <div className="flex justify-between text-slate-300">
+                    <span className="text-slate-400">Coordinates:</span>
+                    <span>{modalDistrictGeo.lat.toFixed(2)}°N, {modalDistrictGeo.lng.toFixed(2)}°E</span>
+                  </div>
+                  <div className="pt-2 border-t border-slate-700">
+                    <a
+                      href={modalDistrictGeo.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex items-center justify-center gap-1.5 text-xs font-semibold transition"
+                    >
+                      <span>MapsofIndia Link</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
                   </div>
                 </div>
               </div>
-            ))}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-800 bg-slate-950 flex items-center justify-between text-xs text-slate-400">
+              <span>Source: MapsofIndia.com / Jharkhand Administrative Atlas</span>
+              <button
+                onClick={() => setModalDistrictGeo(null)}
+                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold transition"
+              >
+                Close Inspector
+              </button>
+            </div>
           </div>
         </div>
       )}
