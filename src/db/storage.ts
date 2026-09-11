@@ -55,8 +55,8 @@ class TransparencyStorageEngine {
         const parsed = JSON.parse(raw);
         if (parsed) {
           return {
-            challenges: parsed.publicChallenges || parsed.problems || PUBLIC_CHALLENGES,
-            solutions: parsed.solutions || PUBLIC_SOLUTIONS,
+            challenges: Array.isArray(parsed.publicChallenges) ? parsed.publicChallenges : Array.isArray(parsed.problems) ? parsed.problems : [],
+            solutions: Array.isArray(parsed.solutions) ? parsed.solutions : [],
             districts: parsed.districts || JHARKHAND_DISTRICTS,
             impact: parsed.impact || STATE_WIDE_STATS,
             lineage: parsed.lineage || LINEAGE_DATA,
@@ -72,8 +72,8 @@ class TransparencyStorageEngine {
     }
 
     return {
-      challenges: PUBLIC_CHALLENGES,
-      solutions: PUBLIC_SOLUTIONS,
+      challenges: [],
+      solutions: [],
       districts: JHARKHAND_DISTRICTS,
       impact: STATE_WIDE_STATS,
       lineage: LINEAGE_DATA,
@@ -82,6 +82,41 @@ class TransparencyStorageEngine {
       infrastructure: PUBLIC_INFRASTRUCTURE_ASSETS,
       subscriptions: [],
     };
+  }
+
+  public reload(): void {
+    try {
+      if (fs.existsSync(this.filePath)) {
+        const raw = fs.readFileSync(this.filePath, 'utf-8');
+        const parsed = JSON.parse(raw);
+        if (parsed) {
+          const rawChallenges = Array.isArray(parsed.problems) ? parsed.problems : Array.isArray(parsed.challenges) ? parsed.challenges : [];
+          this.data.challenges = rawChallenges.map((c: any) => ({
+            id: c.id,
+            title: c.title,
+            description: c.description,
+            district: c.district || c.location?.district || 'Ranchi',
+            block: c.block || c.location?.block || 'Kanke',
+            domain: c.domain || c.category || 'Public Infrastructure',
+            category: c.category || c.domain || 'Public Infrastructure',
+            status: c.status || 'Reported',
+            dateReported: c.dateReported || c.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+            verifiedCitizenSupporters: c.verifiedCitizenSupporters || c.supportersCount || 1,
+            affectedPopulation: c.affectedCountApprox || 1200,
+            assignedDepartment: c.assignedDepartment || 'Pending Triage',
+            slaStatus: c.slaStatus || 'Within SLA',
+            resolutionNotes: c.resolutionNotes,
+            resolvedDate: c.resolvedDate,
+            location: c.location,
+          }));
+          if (Array.isArray(parsed.solutions)) {
+            this.data.solutions = parsed.solutions;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Transparency store reload error:', e);
+    }
   }
 
   public saveData(): void {
@@ -96,9 +131,10 @@ class TransparencyStorageEngine {
 
   // Overview
   public getOverview() {
+    this.reload();
     const total = this.data.challenges.length;
-    const resolved = this.data.challenges.filter(c => c.status === 'Resolved' || c.status === 'Verified').length;
-    const inProgress = this.data.challenges.filter(c => c.status === 'In Progress' || c.status === 'Under Action').length;
+    const resolved = this.data.challenges.filter(c => c.status === 'Resolved' || c.status === 'Citizen Verified').length;
+    const inProgress = this.data.challenges.filter(c => c.status === 'Assigned' || c.status === 'In Progress' || c.status === 'Under Action').length;
     const activeProjects = this.data.solutions.length;
 
     return {
@@ -115,12 +151,13 @@ class TransparencyStorageEngine {
 
   // Challenges
   public getChallenges(filter?: { district?: string; category?: string; query?: string; status?: string }) {
+    this.reload();
     let list = [...this.data.challenges];
     if (filter?.district && filter.district !== 'All') {
       list = list.filter(c => c.district?.toLowerCase() === filter.district?.toLowerCase() || c.location?.district?.toLowerCase() === filter.district?.toLowerCase());
     }
     if (filter?.category && filter.category !== 'All') {
-      list = list.filter(c => c.category?.toLowerCase() === filter.category?.toLowerCase());
+      list = list.filter(c => c.category?.toLowerCase() === filter.category?.toLowerCase() || c.domain?.toLowerCase() === filter.category?.toLowerCase());
     }
     if (filter?.status && filter.status !== 'All') {
       list = list.filter(c => c.status?.toLowerCase() === filter.status?.toLowerCase());
@@ -138,6 +175,7 @@ class TransparencyStorageEngine {
   }
 
   public getChallengeById(id: string) {
+    this.reload();
     return this.data.challenges.find(c => c.id?.toLowerCase() === id.toLowerCase());
   }
 

@@ -115,11 +115,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {language === 'hi' ? 'जनसमाधान' : 'JanaSamadhan'}
                 </h1>
                 <span className="text-[10px] font-mono px-1.5 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded">
-                  Layer 5
+                  {language === 'hi' ? 'लोक पारदर्शिता' : 'Public Record'}
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 font-medium leading-tight mt-0.5">
-                Public Transparency, Accountability & Impact
+                {language === 'hi' ? 'स्वतंत्र लोक पारदर्शिता, सामाजिक प्रभाव एवं जन-लेखा परीक्षा' : 'Independent Public Transparency & Accountability Utility'}
               </p>
             </div>
           </div>

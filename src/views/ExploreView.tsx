@@ -11,11 +11,13 @@ import { PublicChallenge, PublicProject } from '../types';
 interface ExploreViewProps {
   onOpenChallenge: (challengeId: string) => void;
   onOpenProject: (projectId: string) => void;
+  challenges?: PublicChallenge[];
 }
 
 export const ExploreView: React.FC<ExploreViewProps> = ({
   onOpenChallenge,
-  onOpenProject
+  onOpenProject,
+  challenges
 }) => {
   const [activeTab, setActiveTab] = useState<'challenges' | 'projects'>('challenges');
 
@@ -31,9 +33,11 @@ export const ExploreView: React.FC<ExploreViewProps> = ({
   const [selectedTRL, setSelectedTRL] = useState<string>('All');
   const [selectedUniversity, setSelectedUniversity] = useState<string>('All');
 
+  const sourceChallenges = challenges || PUBLIC_CHALLENGES;
+
   // Filtered Challenges
   const filteredChallenges = useMemo(() => {
-    return PUBLIC_CHALLENGES.filter(c => {
+    return sourceChallenges.filter(c => {
       const matchesSearch = 
         c.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||

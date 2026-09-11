@@ -29,12 +29,30 @@ export default function App() {
   const [activeLineage, setActiveLineage] = useState<DataLineageDetails | null>(null);
   const [subscribeTopic, setSubscribeTopic] = useState<string | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
-  
+  const [challenges, setChallenges] = useState<PublicChallenge[]>([]);
+
   // District Selection State
   const [selectedDistrict, setSelectedDistrict] = useState<DistrictMetric | null>(null);
 
+  // Sync challenges from backend API
+  useEffect(() => {
+    const fetchChallenges = () => {
+      fetch('/api/v1/transparency/challenges')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data && data.success && Array.isArray(data.data)) {
+            setChallenges(data.data);
+          }
+        })
+        .catch(() => {});
+    };
+    fetchChallenges();
+    const timer = setInterval(fetchChallenges, 3000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Selected Challenge Object
-  const selectedChallenge = PUBLIC_CHALLENGES.find(c => c.id === selectedChallengeId) || null;
+  const selectedChallenge = challenges.find(c => c.id === selectedChallengeId) || PUBLIC_CHALLENGES.find(c => c.id === selectedChallengeId) || null;
 
   // Keyboard shortcut for search (Ctrl+K or Cmd+K)
   useEffect(() => {
@@ -94,6 +112,8 @@ export default function App() {
             onSelectDistrict={handleSelectDistrict}
             onOpenLineage={setActiveLineage}
             onNavigateTab={setCurrentTab}
+            language={language}
+            challenges={challenges}
           />
         )}
 
@@ -101,6 +121,7 @@ export default function App() {
           <ExploreView
             onOpenChallenge={handleOpenChallenge}
             onOpenProject={handleOpenProject}
+            challenges={challenges}
           />
         )}
 
