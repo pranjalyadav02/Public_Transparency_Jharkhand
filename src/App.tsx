@@ -131,6 +131,7 @@ export default function App() {
             onSelectDistrict={setSelectedDistrict}
             onOpenChallenge={handleOpenChallenge}
             onOpenSubscribe={setSubscribeTopic}
+            challenges={challenges}
           />
         )}
 

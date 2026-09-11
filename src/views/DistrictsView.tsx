@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { JHARKHAND_DISTRICTS, PUBLIC_CHALLENGES, PUBLIC_INFRASTRUCTURE_ASSETS } from '../data/mockData';
 import { JHARKHAND_DISTRICTS_GEO } from '../data/jharkhandMapData';
-import { DistrictMetric } from '../types';
+import { DistrictMetric, PublicChallenge } from '../types';
 import { StatusBadge } from '../components/StatusBadge';
 import { 
   MapPin, Search, Building2, CheckCircle2, AlertCircle, 
@@ -14,13 +14,15 @@ interface DistrictsViewProps {
   onSelectDistrict: (district: DistrictMetric) => void;
   onOpenChallenge: (challengeId: string) => void;
   onOpenSubscribe?: (topic: string) => void;
+  challenges?: PublicChallenge[];
 }
 
 export const DistrictsView: React.FC<DistrictsViewProps> = ({
   selectedDistrict,
   onSelectDistrict,
   onOpenChallenge,
-  onOpenSubscribe
+  onOpenSubscribe,
+  challenges = []
 }) => {
   const [districtSearch, setDistrictSearch] = useState('');
   const [activeDistrict, setActiveDistrict] = useState<DistrictMetric>(
@@ -33,8 +35,11 @@ export const DistrictsView: React.FC<DistrictsViewProps> = ({
     d.headquarters.toLowerCase().includes(districtSearch.toLowerCase())
   );
 
-  // Challenges in currently active district
-  const districtChallenges = PUBLIC_CHALLENGES.filter(c => c.district === activeDistrict.name);
+  // Live reports take precedence; reference records remain visible until a district receives live data.
+  const liveDistrictChallenges = challenges.filter(c => c.district === activeDistrict.name);
+  const districtChallenges = liveDistrictChallenges.length > 0
+    ? liveDistrictChallenges
+    : PUBLIC_CHALLENGES.filter(c => c.district === activeDistrict.name);
   
   // Infrastructure in currently active district
   const districtInfrastructure = PUBLIC_INFRASTRUCTURE_ASSETS.filter(a => a.district === activeDistrict.name);
