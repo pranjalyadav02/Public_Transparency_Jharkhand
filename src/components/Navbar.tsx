@@ -3,8 +3,9 @@ import { Language, TRANSLATIONS } from '../data/translations';
 import { 
   Search, Globe, Sun, Moon, Type, Shield, 
   Layers, BarChart3, Building2, MapPin, Database, 
-  Sparkles, Menu, X, Check, HelpCircle
+  Sparkles, Menu, X, Check, HelpCircle, LogOut
 } from 'lucide-react';
+import { handlePortalLogout } from '../utils/navigation';
 
 interface NavbarProps {
   currentTab: string;
@@ -161,6 +162,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </button>
               );
             })}
+
+            {/* Exit to Login Portal */}
+            <button
+              onClick={handlePortalLogout}
+              className="ml-2 px-2.5 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 cursor-pointer"
+              title="Return to JanaSamadhan Login Portal"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Login</span>
+            </button>
           </nav>
 
           {/* Mobile Actions */}
@@ -207,6 +218,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             );
           })}
+          <button
+            onClick={handlePortalLogout}
+            className="w-full px-3 py-2 text-xs font-semibold rounded-lg flex items-center gap-2.5 transition text-left text-rose-600 hover:bg-rose-50 border-t border-slate-100"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Exit to Login Portal</span>
+          </button>
         </div>
       )}
     </header>
