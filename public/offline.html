@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline | Jan-Darpan Jharkhand</title>
+  <meta name="theme-color" content="#064e3b">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #064e3b;
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      border-radius: 1.5rem;
+      padding: 2.25rem 1.75rem;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .icon-badge {
+      width: 4rem;
+      height: 4rem;
+      border-radius: 1rem;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid #10b981;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.25rem auto;
+      font-size: 1.75rem;
+    }
+    h1 { font-size: 1.35rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+    p { font-size: 0.875rem; line-height: 1.5; color: #cbd5e1; margin-bottom: 1.25rem; }
+    .btn {
+      display: inline-block;
+      width: 100%;
+      padding: 0.75rem 1.25rem;
+      background: #10b981;
+      color: #022c22;
+      font-weight: 700;
+      font-size: 0.875rem;
+      border-radius: 0.75rem;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: #34d399; }
+    .emergency {
+      margin-top: 1.25rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+    .emergency a { color: #6ee7b7; text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon-badge">📡</div>
+    <h1>You are currently offline</h1>
+    <p>Jan-Darpan needs an active internet connection to stream live SLA audits and contractor expenditure data.</p>
+    <button class="btn" onclick="window.location.reload()">Retry Connection</button>
+    <div class="emergency">
+      Emergency Helpline: <a href="tel:181">CM Helpline 181</a> | <a href="tel:112">Emergency 112</a>
+    </div>
+  </div>
+  <script>
+    window.addEventListener('online', () => {
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>
